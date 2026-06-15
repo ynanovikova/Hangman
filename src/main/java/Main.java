@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -18,11 +19,15 @@ public class Main {
             "  -----\n  |   |\n  O   |\n /|\\  |\n / \\  |\n      |\n========="
     };
 
+    private static ArrayList<String> dictionary;
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        loadDictionaryOnce("src/словарь висилица.txt");
 
         while (true) {
-            System.out.println(" ВИСЕЛИЦА");
+
+            System.out.println(" ИГРА ВИСИЛИЦА");
             System.out.println("1. Новая игра");
             System.out.println("2. Выйти");
             System.out.print("Ваш выбор: ");
@@ -36,15 +41,33 @@ public class Main {
 
             if (choice.equals("1")) {
                 playGame(scanner);
+            } else {
+                System.out.println("Введите 1 или 2");
             }
         }
         scanner.close();
     }
 
+    private static void loadDictionaryOnce(String path) {
+        dictionary = new ArrayList<>();
+        try {
+            BufferedReader reader = new BufferedReader(new FileReader(path));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String word = line.trim().toLowerCase();
+                if (word.length() >= 3) {
+                    dictionary.add(word);
+                }
+            }
+            reader.close();
+        } catch (IOException e) {
+            System.out.println("Ошибка загрузки словаря");
+        }
+    }
+
     private static void playGame(Scanner scanner) {
-        ArrayList<String> dictionary = loadDictionary("src/словарь висилица.txt");
-        String secretWord = getRandomWord(dictionary);
-        ArrayList<Character> guessedLetters = new ArrayList<>();
+        String secretWord = getRandomWord();
+        HashSet<Character> guessedLetters = new HashSet<>();
         ArrayList<Character> wrongLetters = new ArrayList<>();
         StringBuilder display = new StringBuilder();
         int mistakes = 0;
@@ -89,19 +112,7 @@ public class Main {
                 continue;
             }
 
-            boolean letterAlreadyUsed = false;
-            for (int i = 0; i < guessedLetters.size(); i++) {
-                if (guessedLetters.get(i) == letter) {
-                    letterAlreadyUsed = true;
-                }
-            }
-            for (int i = 0; i < wrongLetters.size(); i++) {
-                if (wrongLetters.get(i) == letter) {
-                    letterAlreadyUsed = true;
-                }
-            }
-
-            if (letterAlreadyUsed) {
+            if (guessedLetters.contains(letter) || wrongLetters.contains(letter)) {
                 System.out.println("Вы уже вводили эту букву");
                 continue;
             }
@@ -132,7 +143,7 @@ public class Main {
         }
     }
 
-    private static void openRandomLetter(String word, StringBuilder display, ArrayList<Character> guessedLetters) {
+    private static void openRandomLetter(String word, StringBuilder display, HashSet<Character> guessedLetters) {
         Random random = new Random();
         int randomPosition = random.nextInt(word.length());
         char letterToOpen = word.charAt(randomPosition);
@@ -145,27 +156,8 @@ public class Main {
         guessedLetters.add(letterToOpen);
     }
 
-    private static ArrayList<String> loadDictionary(String path) {
-        ArrayList<String> words = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(path));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String word = line.trim().toLowerCase();
-                if (word.length() >= 3) {
-                    words.add(word);
-                }
-            }
-            reader.close();
-        } catch (IOException e) {
-            System.out.println("Ошибка загрузки словаря");
-        }
-        return words;
-    }
-
-    private static String getRandomWord(ArrayList<String> dictionary) {
+    private static String getRandomWord() {
         Random random = new Random();
-        int randomIndex = random.nextInt(dictionary.size());
-        return dictionary.get(randomIndex);
+        return dictionary.get(random.nextInt(dictionary.size()));
     }
 }
